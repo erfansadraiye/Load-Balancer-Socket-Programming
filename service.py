@@ -1,23 +1,25 @@
+import argparse
 import socket
 import threading
-import argparse
 
 
 def handle_client(conn, addr):
-    print(f"[NEW CONNECTION] {addr} connected.")
     connected = True
     while connected:
         msg = conn.recv(1024)
         if msg:
-            if msg.decode("utf-8") == DISCONNECT_MESSAGE:
-                connected = False
-            elif msg.decode("utf-8") == HEALTH_CHECK_MESSAGE:
-                conn.send("OK".encode("utf-8"))
+            decoded_msg = msg.decode("utf-8")
+            if decoded_msg == HEALTH_CHECK_MESSAGE:
+                conn.send(HEALTH_CHECK_MESSAGE.encode("utf-8"))
             else:
                 print(f"[MESSAGE RECEIVED] from {addr[0]}:{addr[1]}")
-                number = int(msg.decode("utf-8"))
-                conn.send(f"It’s instance number {number}".encode("utf-8"))
-    print(f"[CONNECTION CLOSED] {addr} disconnected.")
+                if not decoded_msg.isdigit():
+                    conn.send("Invalid message".encode("utf-8"))
+                else:
+                    number = int(decoded_msg)
+                    conn.send(f"It’s instance number {number}".encode("utf-8"))
+        else:
+            connected = False
     conn.close()
 
 
@@ -29,7 +31,6 @@ def start():
         conn, addr = server.accept()
         thread = threading.Thread(target=handle_client, args=(conn, addr))
         thread.start()
-        print(f"[ACTIVE CONNECTIONS] {threading.activeCount() - 1}")
 
 
 parser = argparse.ArgumentParser()
@@ -38,7 +39,6 @@ args = parser.parse_args()
 
 PORT = args.p
 SERVER = "localhost"
-DISCONNECT_MESSAGE = "!DISCONNECT"
 HEALTH_CHECK_MESSAGE = "!HEALTH_CHECK"
 ADDR = (SERVER, PORT)
 

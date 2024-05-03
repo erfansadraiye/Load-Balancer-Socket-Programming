@@ -1,6 +1,6 @@
 import argparse
-import threading
 import socket
+import threading
 import time
 
 
@@ -13,21 +13,20 @@ class Client:
     def send(self, msg):
         message = msg.encode("utf-8")
         self.client.send(message)
-        print(f"Client {self.number} send message: {msg}")
-        received = self.client.recv(1024).decode("utf-8")
+        received = self.client.recv(1024)
         if received:
-            print(f"Client {self.number} received message: {msg}")
+            print(f"Client {self.number} received message: {received.decode('utf-8')}")
+        else:
+            print(f"[ERROR] Client {self.number} did not receive any message")
 
     def disconnect(self):
-        # self.send("!DISCONNECT")
         self.client.close()
-        print(f"Client {self.number} disconnected")
 
 
 parser = argparse.ArgumentParser()
-parser.add_argument("--request_per_second", type=int, default=3)
-parser.add_argument("--total_time", type=int, default=3)
-parser.add_argument("--client_count", type=int, default=5)
+parser.add_argument("--request_per_second", type=int, default=1000)
+parser.add_argument("--total_time", type=int, default=10)
+parser.add_argument("--client_count", type=int, default=1)
 parser.add_argument("--balancerPort", type=int, default=8080)
 parser.add_argument("--balancerIp", type=str, default='localhost')
 args = parser.parse_args()
@@ -52,7 +51,7 @@ def start_client(client_number):
 
 threads = []
 for i in range(CLIENT_COUNT):
-    thread = threading.Thread(target=start_client, args=(i+1,))
+    thread = threading.Thread(target=start_client, args=(i + 1,))
     threads.append(thread)
     thread.start()
 

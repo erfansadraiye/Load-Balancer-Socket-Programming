@@ -1,48 +1,43 @@
 import argparse
-import json
 import socket
-import time
 import threading
+import time
 from itertools import cycle
 
 
 class Server:
 
     def __init__(self, host, port):
-        self.server = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
         self.addr = (host, port)
 
     def check_connection(self):
-        return True
-        # try:
-        #     self.server.send(HEALTH_CHECK_MESSAGE.encode("utf-8"))
-        #     resp = self.server.recv(1024)
-        #     if resp.decode("utf-8") == "OK":
-        #         return True
-        #     return False
-        # except:
-        #     return False
-
-    def disconnect(self):
-        self.server.send(DISCONNECT_MESSAGE.encode("utf-8"))
-        self.server.close()
-
-    def try_to_connect(self):
+        s = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
         try:
-            self.server.connect(self.addr)
-            return True
+            s.connect(self.addr)
+            s.send(HEALTH_CHECK_MESSAGE.encode("utf-8"))
+            received = s.recv(1024)
+            if received:
+                if received.decode("utf-8") == HEALTH_CHECK_MESSAGE:
+                    s.close()
+                    return True
+            s.close()
+            return False
         except:
             return False
 
-    """
-    Send a message to the server and get the response
-    """
-
     def send(self, msg):
-        self.server.send(msg)
-        received = self.server.recv(1024)
+        """
+        Send a message to the server and get the response
+        """
+        s = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+        s.connect(self.addr)
+        s.send(msg)
+        received = s.recv(1024)
         if received:
+            s.close()
             return received
+        s.close()
+        print(f"Failed to get response from {self.addr[0]}:{self.addr[1]}")
         return None
 
 
@@ -93,7 +88,7 @@ def initialize_servers():
                 continue
             server = server_text.split()
             s = Server(server[0], int(server[1]))
-            if s.try_to_connect():
+            if s.check_connection():
                 servers.append(s)
             else:
                 print(f"Failed to connect to {server[0]}:{server[1]}")
@@ -102,31 +97,26 @@ def initialize_servers():
 
 
 def handle_client(conn, addr):
-    print(f"[NEW CONNECTION] {addr} connected.")
     connected = True
     while connected:
         msg = conn.recv(1024)
         if msg:
-            if msg.decode("utf-8") == DISCONNECT_MESSAGE:
-                connected = False
-            elif msg.decode("utf-8").isnumeric():
-                next_server = next(iter_servers)
-                print(
-                    f"[MESSAGE RECEIVED] from {addr[0]}:{addr[1]} and forwarded to {next_server.addr[0]}:{next_server.addr[1]}")
-                response = next_server.send(msg)
-                if response:
-                    conn.send(response)
-                else:
-                    conn.send("Server not available".encode("utf-8"))
+            next_server = next(iter_servers)
+            print(f"[MESSAGE RECEIVED] from {addr[0]}:{addr[1]}"
+                  f" and forwarded to {next_server.addr[0]}:{next_server.addr[1]}")
+            response = next_server.send(msg)
+            if response:
+                conn.send(response)
             else:
-                "Invalid message received"
-
-
-    print(f"[CONNECTION CLOSED] {addr} disconnected.")
+                conn.send("Server not available".encode("utf-8"))
+        else:
+            connected = False
     conn.close()
 
 
 def start():
+    server = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+    server.bind(ADDR)
     server.listen()
     addr = server.getsockname()
     print(f"[LISTENING] Server is listening on {addr[0]}:{addr[1]}")
@@ -134,7 +124,6 @@ def start():
         conn, addr = server.accept()
         thread = threading.Thread(target=handle_client, args=(conn, addr))
         thread.start()
-        print(f"[ACTIVE CONNECTIONS] {threading.activeCount() - 1}")
 
 
 parser = argparse.ArgumentParser()
@@ -146,15 +135,10 @@ PORT = args.p
 REFRESH_RATE = args.refreshRate
 SERVER = "localhost"
 ADDR = (SERVER, PORT)
-DISCONNECT_MESSAGE = "!DISCONNECT"
 HEALTH_CHECK_MESSAGE = "!HEALTH_CHECK"
 
-server = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
-server.bind(ADDR)
-
 initialize_servers()
-
-# t = threading.Thread(target=schedule_refresh)
-# t.start()
-
 start()
+
+t = threading.Thread(target=schedule_refresh)
+t.start()
