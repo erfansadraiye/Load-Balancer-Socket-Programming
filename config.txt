@@ -1,3 +1,3 @@
-localhost 53772
-localhost 53778
-localhost 53780
+localhost 52767
+localhost 52776
+localhost 52783

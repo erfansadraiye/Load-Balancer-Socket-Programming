@@ -16,7 +16,7 @@ The `Client` class has three methods:
 
 1. `__init__`: This method initializes the client socket and connects to the server.
 2. `send`: This method sends a message to the server and receives a response.
-3. `disconnect`: This method sends a disconnect message to the server and closes the client socket.
+3. `disconnect`: This method closes the socket.
 
 for running the client, you can use the following command:
 
@@ -64,12 +64,10 @@ This is the load balancer server.
 It listens for incoming connections from clients and forwards them to the services.
 The server uses a round-robin algorithm to distribute the requests among the services.
 
-The `Server` class is used to connect to the services and send messages to them. There are four methods in the class:
+The `Server` class is used to connect to the services and send messages to them. There are two methods in the class:
 
-1. `check_connection`: This method checks if the connection is still alive.
-2. `disconnect`: This method disconnects the client.
-3. `try_to_connect` : This method tries to connect to the service.
-4. `send`: This method sends a message to the service and receives a response.
+1. `check_connection`: This method checks if the server is available.
+2. `send`: This method sends a message to the service and receives a response.
 
 There is a scheduler that checks the health of the servers every `refreshRate` seconds.
 If a server is down, the scheduler will remove it from the list of servers.

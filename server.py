@@ -30,15 +30,19 @@ class Server:
         Send a message to the server and get the response
         """
         s = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
-        s.connect(self.addr)
-        s.send(msg)
-        received = s.recv(1024)
-        if received:
+        try:
+            s.connect(self.addr)
+            s.send(msg)
+            received = s.recv(1024)
+            if received:
+                s.close()
+                return received
             s.close()
-            return received
-        s.close()
-        print(f"Failed to get response from {self.addr[0]}:{self.addr[1]}")
-        return None
+            print(f"Failed to get response from {self.addr[0]}:{self.addr[1]}")
+            return None
+        except:
+            print(f"Failed to get response from {self.addr[0]}:{self.addr[1]}")
+            return None
 
 
 servers = []
@@ -138,7 +142,8 @@ ADDR = (SERVER, PORT)
 HEALTH_CHECK_MESSAGE = "!HEALTH_CHECK"
 
 initialize_servers()
-start()
 
 t = threading.Thread(target=schedule_refresh)
 t.start()
+
+start()

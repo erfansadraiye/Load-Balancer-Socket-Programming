@@ -24,9 +24,9 @@ class Client:
 
 
 parser = argparse.ArgumentParser()
-parser.add_argument("--request_per_second", type=int, default=1000)
+parser.add_argument("--request_per_second", type=int, default=10)
 parser.add_argument("--total_time", type=int, default=10)
-parser.add_argument("--client_count", type=int, default=1)
+parser.add_argument("--client_count", type=int, default=5)
 parser.add_argument("--balancerPort", type=int, default=8080)
 parser.add_argument("--balancerIp", type=str, default='localhost')
 args = parser.parse_args()
