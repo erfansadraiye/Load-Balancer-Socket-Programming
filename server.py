@@ -3,6 +3,7 @@ import socket
 import threading
 import time
 from itertools import cycle
+import json
 
 
 class Server:
@@ -74,7 +75,7 @@ def refresh_servers():
 #         data = json.load(f)
 #         for server in data["servers"]:
 #             s = Server(server["host"], server["port"])
-#             if s.try_to_connect():
+#             if s.check_connection():
 #                 servers.append(s)
 #             else:
 #                 print(f"Failed to connect to {server['host']}:{server['port']}")
